@@ -13,7 +13,10 @@ import { OrdersModule } from '@/modules/orders/orders.module';
 import { OrderDetail } from '@/modules/order.detail/schemas/order.detail.schema';
 import { RestaurantsModule } from '@/modules/restaurants/restaurants.module';
 import { ReviewsModule } from '@/modules/reviews/reviews.module';
-import { TicketModule } from './ticket/ticket.module';
+import { TicketModule } from '@/ticket/ticket.module';
+import { AuthModule } from '@/auth/auth.module';
+import { JwtAuthGuard } from '@/auth/passport/jwt-auth.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -36,8 +39,15 @@ import { TicketModule } from './ticket/ticket.module';
       inject: [ConfigService],
     }),
     TicketModule,
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}
