@@ -10,10 +10,15 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { Public } from '@/decorator/customize.jwt-auth.guard';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import { SendMailDto } from './dto/mail-dto';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly mailerService: MailerService,
+  ) {}
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -30,5 +35,19 @@ export class AuthController {
   @Post('register')
   HandleRegister(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.register(createAuthDto);
+  }
+  @Public()
+  @Get('send-mail')
+  HandleSendMail() {
+    return this.mailerService.sendMail({
+      to: 'nguyentan28042000@gmail.com',
+      subject: 'Test Mail mailer',
+      text: 'Test Mail mailer',
+      template: 'register',
+      context: {
+        name: 'Nguyen Tan',
+        activationCode: '123456',
+      },
+    });
   }
 }

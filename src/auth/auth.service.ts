@@ -9,17 +9,23 @@ import { UsersService } from '@/modules/users/users.service';
 import { comparePassword } from '@/utils/helpers';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@/types/TypeUser';
+import { MailerService } from '@nestjs-modules/mailer';
+import { SendMailDto } from './dto/mail-dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findbyEmail(email);
     if (!user) {
       throw new UnauthorizedException('Username/password is incorrect');
+    }
+    if (user.isActive === false) {
+      throw new UnauthorizedException('Please activate your account');
     }
     const isValidPassword = await comparePassword(password, user.password);
     if (!isValidPassword) {
@@ -44,4 +50,16 @@ export class AuthService {
     }
     return this.usersService.register(createAuthDto);
   }
+  // async sendMail() {
+  //   return this.mailerService.sendMail({
+  //     to: 'nguyentan28042000@gmail.com',
+  //     subject: 'Test Mail mailer',
+  //     text: 'Test Mail mailer',
+  //     html: 'register',
+  //     context: {
+  //       name: 'Nguyen Tan',
+  //       activationCode: '123456',
+  //     },
+  //   });
+  // }
 }

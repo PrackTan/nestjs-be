@@ -1,3 +1,4 @@
+import { MailerService } from '@nestjs-modules/mailer';
 import {
   BadRequestException,
   Injectable,
@@ -18,6 +19,7 @@ export class UsersService {
   constructor(
     @InjectModel(User.name)
     private userModel: Model<User>,
+    private readonly mailerService: MailerService,
   ) {}
   async findByEmail(email: string) {
     return await this.userModel.exists({ email });
@@ -136,6 +138,7 @@ export class UsersService {
     return user;
   }
   async register(createAuthDto: CreateAuthDto) {
+    const codeId = uuidv4();
     //check email exists
     const user = await this.findbyEmail(createAuthDto.email);
     if (user) {
@@ -147,12 +150,25 @@ export class UsersService {
       name: createAuthDto.name,
       email: createAuthDto.email,
       password: hashedPassword,
-      codeId: uuidv4(),
+      codeId: codeId,
       isActive: false,
       codeExpired: dayjs().add(1, 'hour').toDate(),
     });
 
     // return newUser
-    return newUser;
+    await this.mailerService.sendMail({
+      to: createAuthDto.email,
+      subject: 'Activate your account at Webshop',
+      text: 'Activate your account',
+      template: 'register',
+      context: {
+        name: createAuthDto.name ?? createAuthDto.email,
+        activationCode: codeId,
+      },
+    });
+    return {
+      message: 'Please check your email to activate your account',
+      _id: newUser._id,
+    };
   }
 }
