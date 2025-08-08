@@ -21,9 +21,7 @@ export class AuthService {
   ) {}
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findbyEmail(email);
-    if (!user) {
-      throw new UnauthorizedException('Username/password is incorrect');
-    }
+    if (!user) return null;
     if (user.isActive === false) {
       throw new UnauthorizedException('Please activate your account');
     }
