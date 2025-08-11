@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '@/types/TypeUser';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SendMailDto } from './dto/mail-dto';
+import { InvalidVerificationCodeException } from '@/core/global-exeptions';
 
 @Injectable()
 export class AuthService {
@@ -23,7 +24,7 @@ export class AuthService {
     const user = await this.usersService.findbyEmail(email);
     if (!user) return null;
     if (user.isActive === false) {
-      throw new UnauthorizedException('Please activate your account');
+      throw new InvalidVerificationCodeException();
     }
     const isValidPassword = await comparePassword(password, user.password);
     if (!isValidPassword) {
