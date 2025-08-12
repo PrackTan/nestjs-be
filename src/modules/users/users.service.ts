@@ -14,6 +14,7 @@ import aqp from 'api-query-params';
 import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
+import { CodeAuthDto, ResendCodeDto } from '@/auth/dto/mail-dto';
 @Injectable()
 export class UsersService {
   constructor(
@@ -152,7 +153,7 @@ export class UsersService {
       password: hashedPassword,
       codeId: codeId,
       isActive: false,
-      codeExpired: dayjs().add(1, 'hour').toDate(),
+      codeExpired: dayjs().add(5, 'minutes').toDate(),
     });
 
     // return newUser
@@ -170,5 +171,83 @@ export class UsersService {
       message: 'Please check your email to activate your account',
       _id: newUser._id,
     };
+  }
+  // Phương thức xác minh mã kích hoạt tài khoản
+  // Tham số: codeAuthDto chứa _id của user và codeId (mã kích hoạt) cần xác minh
+  async handleCheckcode(codeAuthDto: CodeAuthDto) {
+    // Tìm user trong database theo _id và codeId được cung cấp
+    const user = await this.userModel.findOne({
+      _id: codeAuthDto._id,
+      codeId: codeAuthDto.codeId,
+    });
+
+    // Kiểm tra nếu không tìm thấy user với thông tin xác minh đã cung cấp
+    if (!user) {
+      throw new BadRequestException('Invalid verification info');
+    }
+
+    // Kiểm tra nếu mã kích hoạt đã hết hạn hoặc không tồn tại thời gian hết hạn
+    if (!user.codeExpired || dayjs().isAfter(dayjs(user.codeExpired))) {
+      throw new BadRequestException('Verification code expired');
+    }
+
+    // Kích hoạt tài khoản user
+    user.isActive = true;
+    // Xóa mã kích hoạt sau khi đã sử dụng
+    user.codeId = undefined;
+    // Xóa thời gian hết hạn của mã kích hoạt
+    user.codeExpired = undefined as unknown as Date;
+    // Lưu thay đổi vào database
+    await user.save();
+
+    // Trả về thông báo kích hoạt thành công
+    return { message: 'Account activated' };
+  }
+
+  // Phương thức gửi lại mã kích hoạt tài khoản
+  // Tham số: resendCodeDto chứa _id của user cần gửi lại mã
+  async resendActivationCode(resendCodeDto: ResendCodeDto) {
+    // Tìm user theo _id được cung cấp trong request
+    const user = await this.userModel.findById(resendCodeDto._id);
+
+    // Kiểm tra nếu không tìm thấy user
+    if (!user) {
+      throw new NotFoundException(
+        `User with id ${resendCodeDto._id} not found`,
+      );
+    }
+
+    // Kiểm tra nếu tài khoản đã được kích hoạt rồi
+    if (user.isActive) {
+      throw new BadRequestException('Account already activated');
+    }
+
+    // Tạo mã kích hoạt mới sử dụng uuidv4
+    const newCodeId = uuidv4();
+
+    // Cập nhật mã kích hoạt mới cho user
+    user.codeId = newCodeId;
+
+    // Đặt thời gian hết hạn cho mã kích hoạt (5 phút từ thời điểm hiện tại)
+    user.codeExpired = dayjs().add(5, 'minutes').toDate();
+
+    // Lưu thông tin user đã cập nhật vào database
+    await user.save();
+
+    // Gửi email chứa mã kích hoạt mới tới địa chỉ email của user
+    await this.mailerService.sendMail({
+      to: user.email, // Địa chỉ email người nhận
+      subject: 'Activate your account at Webshop', // Tiêu đề email
+      text: 'Activate your account', // Nội dung text thuần
+      template: 'register', // Template email sử dụng
+      context: {
+        // Dữ liệu truyền vào template
+        name: user.name ?? user.email, // Tên hiển thị (nếu không có tên thì dùng email)
+        activationCode: newCodeId, // Mã kích hoạt mới
+      },
+    });
+
+    // Trả về thông báo thành công
+    return { message: 'Verification code resent' };
   }
 }

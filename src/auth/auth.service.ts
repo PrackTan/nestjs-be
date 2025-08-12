@@ -10,7 +10,7 @@ import { comparePassword } from '@/utils/helpers';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@/types/TypeUser';
 import { MailerService } from '@nestjs-modules/mailer';
-import { SendMailDto } from './dto/mail-dto';
+import { CodeAuthDto, ResendCodeDto } from './dto/mail-dto';
 import { InvalidVerificationCodeException } from '@/core/global-exeptions';
 
 @Injectable()
@@ -66,4 +66,11 @@ export class AuthService {
   //     },
   //   });
   // }
+  async CheckCodeAuth(codeAuthDto: CodeAuthDto) {
+    return await this.usersService.handleCheckcode(codeAuthDto);
+  }
+
+  async ResendCode(codeDto: ResendCodeDto) {
+    return await this.usersService.resendActivationCode(codeDto);
+  }
 }

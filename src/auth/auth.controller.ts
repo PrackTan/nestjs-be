@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { Public, ResponseMessage } from '@/decorator/customize.jwt-auth.guard';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { SendMailDto } from './dto/mail-dto';
+import { CodeAuthDto, ResendCodeDto } from './dto/mail-dto';
 import { MailerService } from '@nestjs-modules/mailer';
 
 @Controller('auth')
@@ -50,5 +50,16 @@ export class AuthController {
         activationCode: '123456',
       },
     });
+  }
+  @Public()
+  @Post('send-mail-otp')
+  HandleSendMailOtp(@Body() codeAuthDto: CodeAuthDto) {
+    return this.authService.CheckCodeAuth(codeAuthDto);
+  }
+
+  @Public()
+  @Post('resend-mail-otp')
+  HandleResendMailOtp(@Body() resendCodeDto: ResendCodeDto) {
+    return this.authService.ResendCode(resendCodeDto);
   }
 }

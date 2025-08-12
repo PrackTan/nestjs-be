@@ -13,6 +13,8 @@ async function bootstrap() {
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: false,
+    credentials: true,
   });
 
   // Đặt prefix cho tất cả các route là 'api'
