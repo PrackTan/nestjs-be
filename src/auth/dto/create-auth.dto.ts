@@ -11,3 +11,11 @@ export class CreateAuthDto {
   @IsOptional()
   name: string;
 }
+export class ForgotPasswordDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+}

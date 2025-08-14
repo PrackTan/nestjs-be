@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { Public, ResponseMessage } from '@/decorator/customize.jwt-auth.guard';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { CodeAuthDto, ResendCodeDto } from './dto/mail-dto';
+import { CodeAuthDto, ResendCodeDto, RetryCodeDto } from './dto/mail-dto';
 import { MailerService } from '@nestjs-modules/mailer';
 
 @Controller('auth')
@@ -52,7 +52,7 @@ export class AuthController {
     });
   }
   @Public()
-  @Post('send-mail-otp')
+  @Post('check-code')
   HandleSendMailOtp(@Body() codeAuthDto: CodeAuthDto) {
     return this.authService.CheckCodeAuth(codeAuthDto);
   }
@@ -61,5 +61,10 @@ export class AuthController {
   @Post('resend-mail-otp')
   HandleResendMailOtp(@Body() resendCodeDto: ResendCodeDto) {
     return this.authService.ResendCode(resendCodeDto);
+  }
+  @Public()
+  @Post('retry-mail-otp')
+  HandleRetryMailOtp(@Body() retryCodeDto: RetryCodeDto) {
+    return this.authService.RetryCode(retryCodeDto);
   }
 }

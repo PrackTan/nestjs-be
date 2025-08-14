@@ -17,3 +17,8 @@ export class ResendCodeDto {
   @IsNotEmpty()
   _id: string; // userId
 }
+
+export class RetryCodeDto {
+  @IsNotEmpty()
+  email: string; // userId
+}

@@ -3,14 +3,14 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { CreateAuthDto, ForgotPasswordDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { UsersService } from '@/modules/users/users.service';
 import { comparePassword } from '@/utils/helpers';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@/types/TypeUser';
 import { MailerService } from '@nestjs-modules/mailer';
-import { CodeAuthDto, ResendCodeDto } from './dto/mail-dto';
+import { CodeAuthDto, ResendCodeDto, RetryCodeDto } from './dto/mail-dto';
 import { InvalidVerificationCodeException } from '@/core/global-exeptions';
 
 @Injectable()
@@ -72,5 +72,11 @@ export class AuthService {
 
   async ResendCode(codeDto: ResendCodeDto) {
     return await this.usersService.resendActivationCode(codeDto);
+  }
+  async RetryCode(retryCodeDto: RetryCodeDto) {
+    return await this.usersService.retryActivationCode(retryCodeDto);
+  }
+  async ForgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    return await this.usersService.forgotPassword(forgotPasswordDto);
   }
 }
