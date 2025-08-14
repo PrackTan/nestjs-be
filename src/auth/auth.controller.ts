@@ -9,7 +9,7 @@ import {
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { Public, ResponseMessage } from '@/decorator/customize.jwt-auth.guard';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { CreateAuthDto, ForgotPasswordDto } from './dto/create-auth.dto';
 import { CodeAuthDto, ResendCodeDto, RetryCodeDto } from './dto/mail-dto';
 import { MailerService } from '@nestjs-modules/mailer';
 
@@ -66,5 +66,10 @@ export class AuthController {
   @Post('retry-mail-otp')
   HandleRetryMailOtp(@Body() retryCodeDto: RetryCodeDto) {
     return this.authService.RetryCode(retryCodeDto);
+  }
+  @Public()
+  @Post('forgot-password')
+  HandleForgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.ForgotPassword(forgotPasswordDto);
   }
 }
