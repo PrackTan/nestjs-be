@@ -1,4 +1,4 @@
-import { MailerService } from '@nestjs-modules/mailer';
+import { MailService } from '@/mail/mail.service';
 import {
   BadRequestException,
   Injectable,
@@ -14,17 +14,41 @@ import aqp from 'api-query-params';
 import { CreateAuthDto, ForgotPasswordDto } from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
-import { CodeAuthDto, ResendCodeDto, RetryCodeDto } from '@/auth/dto/mail-dto';
+import {
+  CodeAuthDto,
+  CodeAuthResetPasswordDto,
+  ResendCodeDto,
+  RetryCodeDto,
+  SendForgotPasswordMailDto,
+} from '@/auth/dto/mail-dto';
+
+/**
+ * Service xử lý các thao tác liên quan đến User
+ * Chịu trách nhiệm quản lý người dùng, xác thực email, quên mật khẩu
+ */
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name)
     private userModel: Model<User>,
-    private readonly mailerService: MailerService,
+    private readonly mailService: MailService,
   ) {}
+
+  /**
+   * Kiểm tra email đã tồn tại trong hệ thống
+   * @param email - Địa chỉ email cần kiểm tra
+   * @returns Promise<any> - Trả về thông tin user nếu tồn tại, null nếu không
+   */
   async findByEmail(email: string) {
     return await this.userModel.exists({ email });
   }
+
+  /**
+   * Tạo user mới với kiểm tra email trùng lặp
+   * @param createUserDto - Dữ liệu để tạo user mới
+   * @returns Promise<User> - User vừa được tạo
+   * @throws BadRequestException - Nếu email đã tồn tại
+   */
   async create(createUserDto: CreateUserDto) {
     const existUser = await this.findByEmail(createUserDto.email);
     if (existUser) {
@@ -105,12 +129,30 @@ export class UsersService {
     };
   }
 
+  /**
+   * Tìm một user theo ID (chưa được implement đầy đủ)
+   * @param id - ID của user cần tìm
+   * @returns string - Thông báo placeholder
+   */
   findOne(id: number) {
     return `This action returns a #${id} user`;
   }
+
+  /**
+   * Tìm user theo địa chỉ email
+   * @param email - Địa chỉ email cần tìm
+   * @returns Promise<User | null> - User nếu tồn tại, null nếu không
+   */
   async findbyEmail(email: string) {
     return await this.userModel.findOne({ email });
   }
+
+  /**
+   * Cập nhật thông tin user
+   * @param updateUserDto - Dữ liệu cập nhật user
+   * @returns Promise<User> - User trước khi cập nhật
+   * @throws NotFoundException - Nếu không tìm thấy user
+   */
   async update(updateUserDto: UpdateUserDto) {
     const user = await this.userModel.findById(updateUserDto._id);
     if (!user) {
@@ -130,6 +172,12 @@ export class UsersService {
     return user;
   }
 
+  /**
+   * Xóa user theo ID
+   * @param id - ID của user cần xóa
+   * @returns Promise<User> - User đã bị xóa
+   * @throws NotFoundException - Nếu không tìm thấy user
+   */
   async remove(id: string) {
     const user = await this.userModel.findById(id);
     if (!user) {
@@ -138,6 +186,17 @@ export class UsersService {
     await this.userModel.deleteOne({ _id: id });
     return user;
   }
+
+  /**
+   * Đăng ký tài khoản mới với xác thực email
+   * - Tạo mã kích hoạt ngẫu nhiên
+   * - Hash mật khẩu
+   * - Tạo user với trạng thái chưa kích hoạt
+   * - Gửi email kích hoạt
+   * @param createAuthDto - Dữ liệu đăng ký tài khoản
+   * @returns Promise<{message: string, _id: string}> - Thông báo và ID user
+   * @throws BadRequestException - Nếu email đã tồn tại
+   */
   async register(createAuthDto: CreateAuthDto) {
     const codeId = uuidv4();
     //check email exists
@@ -156,29 +215,32 @@ export class UsersService {
       codeExpired: dayjs().add(5, 'minutes').toDate(),
     });
 
-    // return newUser
-    await this.mailerService.sendMail({
+    // Gửi email kích hoạt tài khoản
+    await this.mailService.sendActivationMail({
       to: createAuthDto.email,
-      subject: 'Activate your account at Webshop',
-      text: 'Activate your account',
-      template: 'register',
-      context: {
-        name: createAuthDto.name ?? createAuthDto.email,
-        activationCode: codeId,
-      },
+      name: createAuthDto.name ?? createAuthDto.email,
+      activationCode: codeId,
     });
     return {
       message: 'Please check your email to activate your account',
       _id: newUser._id,
     };
   }
-  // Phương thức xác minh mã kích hoạt tài khoản
-  // Tham số: codeAuthDto chứa _id của user và codeId (mã kích hoạt) cần xác minh
+
+  /**
+   * Xác minh mã kích hoạt tài khoản
+   * - Tìm user theo ID và mã kích hoạt
+   * - Kiểm tra thời gian hết hạn
+   * - Kích hoạt tài khoản nếu mã còn hiệu lực
+   * @param codeAuthDto - Dữ liệu xác minh chứa _id và codeId
+   * @returns Promise<{message: string}> - Thông báo kết quả
+   * @throws BadRequestException - Nếu thông tin xác minh không hợp lệ
+   */
   async handleCheckcode(codeAuthDto: CodeAuthDto) {
     // Tìm user trong database theo _id và codeId được cung cấp
     const user = await this.userModel.findOne({
       _id: codeAuthDto._id,
-      codeId: codeAuthDto.codeId,
+      codeId: codeAuthDto.codeId || undefined,
     });
 
     // Kiểm tra nếu không tìm thấy user với thông tin xác minh đã cung cấp
@@ -203,8 +265,17 @@ export class UsersService {
     return { message: 'Account activated' };
   }
 
-  // Phương thức gửi lại mã kích hoạt tài khoản
-  // Tham số: resendCodeDto chứa _id của user cần gửi lại mã
+  /**
+   * Gửi lại mã kích hoạt tài khoản cho user theo ID
+   * - Kiểm tra user tồn tại và chưa được kích hoạt
+   * - Tạo mã kích hoạt mới
+   * - Cập nhật thời gian hết hạn
+   * - Gửi email kích hoạt mới
+   * @param resendCodeDto - Dữ liệu chứa _id của user
+   * @returns Promise<{message: string}> - Thông báo kết quả
+   * @throws NotFoundException - Nếu không tìm thấy user
+   * @throws BadRequestException - Nếu tài khoản đã được kích hoạt
+   */
   async resendActivationCode(resendCodeDto: ResendCodeDto) {
     // Tìm user theo _id được cung cấp trong request
     const user = await this.userModel.findById(resendCodeDto._id);
@@ -229,22 +300,27 @@ export class UsersService {
       // Lưu thông tin user đã cập nhật vào database
       await user.save();
       // Gửi email chứa mã kích hoạt mới tới địa chỉ email của user
-      await this.mailerService.sendMail({
-        to: user.email, // Địa chỉ email người nhận
-        subject: 'Activate your account at Webshop', // Tiêu đề email
-        text: 'Activate your account', // Nội dung text thuần
-        template: 'register', // Template email sử dụng
-        context: {
-          // Dữ liệu truyền vào template
-          name: user.name ?? user.email, // Tên hiển thị (nếu không có tên thì dùng email)
-          activationCode: newCodeId, // Mã kích hoạt mới
-        },
+      await this.mailService.sendActivationMail({
+        to: user.email,
+        name: user.name ?? user.email,
+        activationCode: newCodeId,
       });
     } else {
       throw new BadRequestException('Account already activated');
     }
     return { message: 'Verification code resent' };
   }
+
+  /**
+   * Thử lại gửi mã kích hoạt cho user theo email
+   * - Tìm user theo email
+   * - Kiểm tra tài khoản chưa được kích hoạt
+   * - Tạo mã kích hoạt mới và gửi email
+   * @param retryCodeDto - Dữ liệu chứa email của user
+   * @returns Promise<{message: string, _id: string}> - Thông báo và ID user
+   * @throws NotFoundException - Nếu không tìm thấy user
+   * @throws BadRequestException - Nếu tài khoản đã kích hoạt hoặc gửi email thất bại
+   */
   async retryActivationCode(retryCodeDto: RetryCodeDto) {
     const user = await this.userModel.findOne({ email: retryCodeDto.email });
     if (!user) {
@@ -261,15 +337,10 @@ export class UsersService {
         codeId: newCodeId,
         codeExpired: dayjs().add(5, 'minutes').toDate(),
       });
-      await this.mailerService.sendMail({
+      await this.mailService.sendActivationMail({
         to: user.email,
-        subject: 'Activate your account at Webshop',
-        text: 'Activate your account',
-        template: 'register',
-        context: {
-          name: user.name ?? user.email,
-          activationCode: newCodeId,
-        },
+        name: user.name ?? user.email,
+        activationCode: newCodeId,
       });
       return {
         message: 'Verification code resent successfully',
@@ -279,6 +350,54 @@ export class UsersService {
       throw new BadRequestException('Failed to send verification code');
     }
   }
+
+  /**
+   * Gửi email reset mật khẩu
+   * - Tìm user theo email
+   * - Tạo token reset mật khẩu
+   * - Gửi email chứa link reset mật khẩu
+   * @param email - Địa chỉ email cần reset mật khẩu
+   * @returns Promise<{message: string, _id: string}> - Thông báo và ID user
+   * @throws NotFoundException - Nếu không tìm thấy user
+   */
+  async sendForgotPasswordMail(
+    sendForgotPasswordMailDto: SendForgotPasswordMailDto,
+  ) {
+    const user = await this.userModel.findOne({
+      email: sendForgotPasswordMailDto.email,
+    });
+    if (!user) {
+      throw new NotFoundException(
+        `User with email ${sendForgotPasswordMailDto.email} not found`,
+      );
+    }
+    try {
+      const newCodeId = uuidv4();
+      await user.updateOne({
+        codeId: newCodeId,
+        codeExpired: dayjs().add(5, 'minutes').toDate(),
+      });
+      await this.mailService.sendForgotPasswordMail({
+        to: user.email,
+        name: user.name ?? user.email,
+        activationCode: newCodeId,
+      });
+      return {
+        message: 'Please check your email to reset your password',
+        _id: user._id,
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to send verification code');
+    }
+  }
+  /**
+   * Cập nhật mật khẩu mới khi quên mật khẩu
+   * - Tìm user theo email
+   * - Hash mật khẩu mới và cập nhật
+   * @param forgotPasswordDto - Dữ liệu chứa email và mật khẩu mới
+   * @returns Promise<{message: string, _id: string}> - Thông báo và ID user
+   * @throws NotFoundException - Nếu không tìm thấy user
+   */
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const user = await this.userModel.findOne({
       email: forgotPasswordDto.email,

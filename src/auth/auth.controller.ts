@@ -10,15 +10,16 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { Public, ResponseMessage } from '@/decorator/customize.jwt-auth.guard';
 import { CreateAuthDto, ForgotPasswordDto } from './dto/create-auth.dto';
-import { CodeAuthDto, ResendCodeDto, RetryCodeDto } from './dto/mail-dto';
-import { MailerService } from '@nestjs-modules/mailer';
+import {
+  CodeAuthDto,
+  ResendCodeDto,
+  RetryCodeDto,
+  SendForgotPasswordMailDto,
+} from './dto/mail-dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly mailerService: MailerService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
   @Public()
   @UseGuards(LocalAuthGuard)
   @ResponseMessage('Login success')
@@ -40,16 +41,7 @@ export class AuthController {
   @Public()
   @Get('send-mail')
   HandleSendMail() {
-    return this.mailerService.sendMail({
-      to: 'nguyentan28042000@gmail.com',
-      subject: 'Test Mail mailer',
-      text: 'Test Mail mailer',
-      template: 'register',
-      context: {
-        name: 'Nguyen Tan',
-        activationCode: '123456',
-      },
-    });
+    return this.authService.sendTestMail();
   }
   @Public()
   @Post('check-code')
@@ -66,6 +58,13 @@ export class AuthController {
   @Post('retry-mail-otp')
   HandleRetryMailOtp(@Body() retryCodeDto: RetryCodeDto) {
     return this.authService.RetryCode(retryCodeDto);
+  }
+  @Public()
+  @Post('send-forgot-password-mail')
+  HandleSendForgotPasswordMail(
+    @Body() sendForgotPasswordMailDto: SendForgotPasswordMailDto,
+  ) {
+    return this.authService.sendForgotPasswordMail(sendForgotPasswordMailDto);
   }
   @Public()
   @Post('forgot-password')

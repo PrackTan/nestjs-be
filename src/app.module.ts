@@ -15,6 +15,7 @@ import { RestaurantsModule } from '@/modules/restaurants/restaurants.module';
 import { ReviewsModule } from '@/modules/reviews/reviews.module';
 import { TicketModule } from '@/ticket/ticket.module';
 import { AuthModule } from '@/auth/auth.module';
+import { MailModule } from '@/mail/mail.module';
 import { JwtAuthGuard } from '@/auth/passport/jwt-auth.guard';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MailerModule } from '@nestjs-modules/mailer';
@@ -34,6 +35,7 @@ import { TransformInterceptor } from '@/core/transform.interceptor';
     ReviewsModule,
     TicketModule,
     AuthModule,
+    MailModule,
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

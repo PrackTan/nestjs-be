@@ -9,8 +9,13 @@ import { UsersService } from '@/modules/users/users.service';
 import { comparePassword } from '@/utils/helpers';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@/types/TypeUser';
-import { MailerService } from '@nestjs-modules/mailer';
-import { CodeAuthDto, ResendCodeDto, RetryCodeDto } from './dto/mail-dto';
+import { MailService } from '@/mail/mail.service';
+import {
+  CodeAuthDto,
+  ResendCodeDto,
+  RetryCodeDto,
+  SendForgotPasswordMailDto,
+} from './dto/mail-dto';
 import { InvalidVerificationCodeException } from '@/core/global-exeptions';
 
 @Injectable()
@@ -18,7 +23,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService,
+    private readonly mailService: MailService,
   ) {}
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findbyEmail(email);
@@ -54,18 +59,13 @@ export class AuthService {
     }
     return this.usersService.register(createAuthDto);
   }
-  // async sendMail() {
-  //   return this.mailerService.sendMail({
-  //     to: 'nguyentan28042000@gmail.com',
-  //     subject: 'Test Mail mailer',
-  //     text: 'Test Mail mailer',
-  //     html: 'register',
-  //     context: {
-  //       name: 'Nguyen Tan',
-  //       activationCode: '123456',
-  //     },
-  //   });
-  // }
+  async sendTestMail() {
+    return this.mailService.sendActivationMail({
+      to: 'nguyentan28042000@gmail.com',
+      name: 'Nguyen Tan',
+      activationCode: '123456',
+    });
+  }
   async CheckCodeAuth(codeAuthDto: CodeAuthDto) {
     return await this.usersService.handleCheckcode(codeAuthDto);
   }
@@ -78,5 +78,12 @@ export class AuthService {
   }
   async ForgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     return await this.usersService.forgotPassword(forgotPasswordDto);
+  }
+  async sendForgotPasswordMail(
+    sendForgotPasswordMailDto: SendForgotPasswordMailDto,
+  ) {
+    return await this.usersService.sendForgotPasswordMail(
+      sendForgotPasswordMailDto,
+    );
   }
 }
