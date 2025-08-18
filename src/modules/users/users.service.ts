@@ -119,8 +119,8 @@ export class UsersService {
 
     // Trả về dữ liệu và thông tin phân trang
     return {
-      data: users,
-      pagination: {
+      result: users,
+      meta: {
         totalItems,
         totalPage,
         current,
