@@ -1,14 +1,16 @@
 /* eslint-disable prettier/prettier */
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { JwtAuthGuard } from './auth/passport/jwt-auth.guard';
 
 async function bootstrap() {
   const configService = new ConfigService();
   const port = configService.get<number>('PORT') || 3000;
   const app = await NestFactory.create(AppModule);
-
+  const reflector = app.get(Reflector);
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],

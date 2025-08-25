@@ -27,8 +27,8 @@ export class UsersController {
   @Get()
   findAll(
     @Query() query: string,
-    @Param('current') current: number,
-    @Param('pageSize') pageSize: number,
+    @Query('current') current: number,
+    @Query('pageSize') pageSize: number,
   ) {
     return this.usersService.findAll(query, current, pageSize);
   }

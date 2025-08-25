@@ -101,10 +101,10 @@ export class UsersService {
     if (!pageSize) pageSize = 10;
 
     // Đếm tổng số bản ghi phù hợp với điều kiện lọc
-    const totalItems = (await this.userModel.find(filter)).length;
+    const total = (await this.userModel.find(filter)).length;
 
     // Tính tổng số trang
-    const totalPage = Math.ceil(totalItems / pageSize);
+    const pages = Math.ceil(total / pageSize);
 
     // Tính số bản ghi cần bỏ qua
     const skip = (current - 1) * pageSize;
@@ -121,8 +121,8 @@ export class UsersService {
     return {
       result: users,
       meta: {
-        totalItems,
-        totalPage,
+        total,
+        pages,
         current,
         pageSize,
       },
