@@ -41,6 +41,12 @@ export class User {
 
   @Prop()
   resetToken: string;
+
+  @Prop()
+  isDeleted: boolean;
+
+  @Prop()
+  deletedAt: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

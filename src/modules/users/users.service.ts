@@ -6,8 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Model } from 'mongoose';
-import { User } from './schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { hashPassword } from '@/utils/helpers';
 import aqp from 'api-query-params';
@@ -21,6 +20,7 @@ import {
   RetryCodeDto,
   SendForgotPasswordMailDto,
 } from '@/auth/dto/mail-dto';
+import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
 
 /**
  * Service xử lý các thao tác liên quan đến User
@@ -30,7 +30,7 @@ import {
 export class UsersService {
   constructor(
     @InjectModel(User.name)
-    private userModel: Model<User>,
+    private userModel: SoftDeleteModel<UserDocument>,
     private readonly mailService: MailService,
   ) {}
 
@@ -90,7 +90,7 @@ export class UsersService {
    */
   async findAll(query: string, current: number, pageSize: number) {
     // Phân tích query string thành filter và sort
-    const { filter, sort } = aqp(query);
+    const { filter, sort, projection, population } = aqp(query);
 
     // Loại bỏ các trường phân trang khỏi filter
     if (filter.current) delete filter.current;
@@ -101,7 +101,7 @@ export class UsersService {
     if (!pageSize) pageSize = 10;
 
     // Đếm tổng số bản ghi phù hợp với điều kiện lọc
-    const total = (await this.userModel.find(filter)).length;
+    const total = await this.userModel.countDocuments(filter);
 
     // Tính tổng số trang
     const pages = Math.ceil(total / pageSize);
@@ -115,7 +115,9 @@ export class UsersService {
       .skip(skip)
       .limit(pageSize)
       .select('-password') // Loại bỏ trường password
-      .sort(sort as any);
+      .sort(sort as any)
+      .populate(population as any)
+      .select(projection as any);
 
     // Trả về dữ liệu và thông tin phân trang
     return {
@@ -183,8 +185,7 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    await this.userModel.deleteOne({ _id: id });
-    return user;
+    return await this.userModel.softDelete({ _id: id });
   }
 
   /**

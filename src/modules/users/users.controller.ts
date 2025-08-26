@@ -13,6 +13,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import aqp from 'api-query-params';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { Public } from '@/decorator/customize.jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -42,7 +43,6 @@ export class UsersController {
   update(@Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(updateUserDto);
   }
-
   @Delete(':id')
   remove(@Param('id') id: DeleteUserDto['id']) {
     return this.usersService.remove(id);

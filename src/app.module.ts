@@ -21,6 +21,8 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { TransformInterceptor } from '@/core/transform.interceptor';
+import { softDeletePlugin } from 'soft-delete-plugin-mongoose';
+import { CategoryModule } from '@/modules/category/category.module';
 /**
  * AppModule - Module gốc của ứng dụng NestJS
  *
@@ -55,6 +57,10 @@ import { TransformInterceptor } from '@/core/transform.interceptor';
       useFactory: async (configService: ConfigService) => ({
         // Lấy URI kết nối MongoDB từ biến môi trường MONGODB_URI
         uri: configService.get<string>('MONGODB_URI'),
+        connectionFactory: (connection) => {
+          connection.plugin(softDeletePlugin);
+          return connection;
+        },
       }),
       inject: [ConfigService],
     }),
@@ -96,6 +102,8 @@ import { TransformInterceptor } from '@/core/transform.interceptor';
       }),
       inject: [ConfigService],
     }),
+
+    CategoryModule,
   ],
   controllers: [AppController], // Controller gốc của ứng dụng
   providers: [
@@ -104,10 +112,6 @@ import { TransformInterceptor } from '@/core/transform.interceptor';
     // === GLOBAL GUARD ===
     // Đăng ký JwtAuthGuard làm guard toàn cục
     // Tất cả các endpoint sẽ yêu cầu JWT token trừ khi được đánh dấu @Public()
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
 
     // === GLOBAL INTERCEPTOR ===
     // Đăng ký TransformInterceptor làm interceptor toàn cục
