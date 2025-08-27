@@ -29,19 +29,34 @@ export class Product {
 
   @Prop()
   updatedAt: Date;
-  @Prop()
+  @Prop({
+    type: {
+      _id: mongoose.Schema.Types.ObjectId,
+      email: String,
+    },
+  })
   createdBy: {
     _id: mongoose.Schema.Types.ObjectId;
     email: string;
   };
 
-  @Prop()
+  @Prop({
+    type: {
+      _id: mongoose.Schema.Types.ObjectId,
+      email: String,
+    },
+  })
   updatedBy: {
     _id: mongoose.Schema.Types.ObjectId;
     email: string;
   };
 
-  @Prop()
+  @Prop({
+    type: {
+      _id: mongoose.Schema.Types.ObjectId,
+      email: String,
+    },
+  })
   deletedBy: {
     _id: mongoose.Schema.Types.ObjectId;
     email: string;

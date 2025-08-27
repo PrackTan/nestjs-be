@@ -38,18 +38,26 @@ export class AuthService {
     return user;
   }
   async login(user: User): Promise<any> {
+    const { _id, email, name, role } = user;
     const payload = {
-      sub: user._id,
-      email: user.email,
+      sub: _id,
+      iss: 'from server',
+      user: {
+        _id: _id,
+        email: email,
+        name: name,
+        role: role,
+      },
     };
     const accessToken = this.jwtService.sign(payload);
     return {
-      user: {
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-      },
       access_token: accessToken,
+      user: {
+        _id: _id,
+        email: email,
+        name: name,
+        role: role,
+      },
     };
   }
   async register(createAuthDto: CreateAuthDto) {

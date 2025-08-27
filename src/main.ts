@@ -10,7 +10,7 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') || 3000;
   const app = await NestFactory.create(AppModule);
   const reflector = app.get(Reflector);
-  // app.useGlobalGuards(new JwtAuthGuard(reflector));
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],

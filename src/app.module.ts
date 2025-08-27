@@ -23,6 +23,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { TransformInterceptor } from '@/core/transform.interceptor';
 import { softDeletePlugin } from 'soft-delete-plugin-mongoose';
 import { CategoryModule } from '@/modules/category/category.module';
+import { ProductsModule } from '@/modules/products/products.module';
 /**
  * AppModule - Module gốc của ứng dụng NestJS
  *
@@ -44,6 +45,7 @@ import { CategoryModule } from '@/modules/category/category.module';
     TicketModule, // Module quản lý ticket/phiếu hỗ trợ
     AuthModule, // Module xác thực người dùng (login, register, JWT)
     MailModule, // Module gửi email tùy chỉnh
+    ProductsModule, // Module quản lý sản phẩm
 
     // === CẤU HÌNH TOÀN CỤC ===
     // Cấu hình biến môi trường có thể sử dụng toàn bộ ứng dụng

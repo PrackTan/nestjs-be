@@ -2,6 +2,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { User } from 'src/types/TypeUser';
 // Xử lý xác thực JWT token
 // - Extract token từ Authorization header (Bearer token)
 // - Verify token với JWT_SECRET
@@ -16,7 +17,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
-    return { _id: payload.sub, email: payload.email };
+  async validate(payload: User) {
+    const { _id, email, name, role } = payload;
+    return { _id: _id, email: email, name: name, role: role };
   }
 }

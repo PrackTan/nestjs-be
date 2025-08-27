@@ -53,7 +53,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     // Nếu có lỗi hoặc không tìm thấy user, ném ra UnauthorizedException
     if (err || !user) {
       throw (
-        err || new UnauthorizedException('Access Token is invalid or expired')
+        err || new UnauthorizedException('Access Token is not have in body')
       );
     }
     // Nếu xác thực thành công, trả về user
