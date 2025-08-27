@@ -6,6 +6,7 @@ import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
 import { Product, ProductDocument } from './schema/product.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import aqp from 'api-query-params';
+import { isEmpty } from 'rxjs';
 @Injectable()
 export class ProductsService {
   constructor(
@@ -29,16 +30,30 @@ export class ProductsService {
   }
 
   async findAll(currentPage: number, limit: number, qs: string) {
-    const { filter, skip, sort, projection, population } = aqp(qs);
-    const offset = (currentPage - 1) * limit;
-    const products = await this.productModel
+    const { filter, skip, projection, population } = aqp(qs);
+    let { sort } = aqp(qs);
+    delete filter.page;
+    delete filter.limit;
+    let offset = (currentPage - 1) * limit;
+    let defaultLimit = limit ? limit : 10;
+    const totalItems = await this.productModel.countDocuments(filter);
+    const totalPages = Math.ceil(totalItems / defaultLimit);
+    const result = await this.productModel
       .find(filter)
       .skip(offset)
       .limit(limit)
       .sort(sort as any)
       .select(projection)
       .populate(population);
-    return products;
+    return {
+      meta: {
+        current: currentPage,
+        pageSize: limit,
+        total: totalItems,
+        totalPages: totalPages,
+      },
+      result,
+    };
   }
 
   findOne(id: number) {
