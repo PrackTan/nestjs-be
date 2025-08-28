@@ -20,6 +20,7 @@ export class ProductsController {
 
   @Post()
   create(@Body() createProductDto: CreateProductDto, @RUser() user: User) {
+    console.log('User object received:', user);
     return this.productsService.create(createProductDto, user);
   }
 
