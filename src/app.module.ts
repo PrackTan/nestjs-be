@@ -118,10 +118,10 @@ import { ProductsModule } from '@/modules/products/products.module';
     // === GLOBAL INTERCEPTOR ===
     // Đăng ký TransformInterceptor làm interceptor toàn cục
     // Chuyển đổi format response thành dạng chuẩn cho toàn bộ ứng dụng
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TransformInterceptor,
-    },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: TransformInterceptor,
+    // },
   ],
 })
 export class AppModule {}

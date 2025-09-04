@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/passport/jwt-auth.guard';
+import { TransformInterceptor } from './core/transform.interceptor';
 
 async function bootstrap() {
   const configService = new ConfigService();
@@ -11,6 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector));
+  app.useGlobalInterceptors(new TransformInterceptor(reflector));
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
