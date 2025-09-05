@@ -416,4 +416,11 @@ export class UsersService {
       _id: user._id,
     };
   }
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    const result = await this.userModel.updateOne(
+      { _id: userId },
+      { refreshToken: refreshToken },
+    );
+    return result;
+  }
 }

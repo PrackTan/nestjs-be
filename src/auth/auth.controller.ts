@@ -11,6 +11,7 @@ import {
   Request,
   Get,
   Body,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
@@ -22,6 +23,7 @@ import {
   RetryCodeDto,
   SendForgotPasswordMailDto,
 } from './dto/mail-dto';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -41,9 +43,9 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @ResponseMessage('Login success')
   @Post('login')
-  HandleLogin(@Request() req) {
+  HandleLogin(@Request() req, @Res({ passthrough: true }) res: Response) {
     // Gọi service để tạo JWT token và trả về thông tin user
-    return this.authService.login(req.user);
+    return this.authService.login(req.user, res);
   }
 
   /**

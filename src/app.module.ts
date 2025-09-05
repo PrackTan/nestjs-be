@@ -13,7 +13,6 @@ import { OrdersModule } from '@/modules/orders/orders.module';
 import { OrderDetail } from '@/modules/order.detail/schemas/order.detail.schema';
 import { RestaurantsModule } from '@/modules/restaurants/restaurants.module';
 import { ReviewsModule } from '@/modules/reviews/reviews.module';
-import { TicketModule } from '@/ticket/ticket.module';
 import { AuthModule } from '@/auth/auth.module';
 import { MailModule } from '@/mail/mail.module';
 import { JwtAuthGuard } from '@/auth/passport/jwt-auth.guard';
@@ -24,6 +23,7 @@ import { TransformInterceptor } from '@/core/transform.interceptor';
 import { softDeletePlugin } from 'soft-delete-plugin-mongoose';
 import { CategoryModule } from '@/modules/category/category.module';
 import { ProductsModule } from '@/modules/products/products.module';
+import { RoleModule } from '@/modules/role/role.module';
 /**
  * AppModule - Module gốc của ứng dụng NestJS
  *
@@ -42,7 +42,6 @@ import { ProductsModule } from '@/modules/products/products.module';
     OrderDetail, // Module quản lý chi tiết đơn hàng
     RestaurantsModule, // Module quản lý nhà hàng
     ReviewsModule, // Module quản lý đánh giá/review
-    TicketModule, // Module quản lý ticket/phiếu hỗ trợ
     AuthModule, // Module xác thực người dùng (login, register, JWT)
     MailModule, // Module gửi email tùy chỉnh
     ProductsModule, // Module quản lý sản phẩm
@@ -106,6 +105,8 @@ import { ProductsModule } from '@/modules/products/products.module';
     }),
 
     CategoryModule,
+
+    RoleModule,
   ],
   controllers: [AppController], // Controller gốc của ứng dụng
   providers: [

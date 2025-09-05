@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
+import { Role } from '@/modules/role/schema/role.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -17,16 +18,20 @@ export class User {
 
   @Prop()
   phone: string;
-
+  @Prop()
+  age: number;
+  @Prop()
+  gender: string;
   @Prop()
   address: string;
 
   @Prop()
   image: string;
 
-  @Prop({ default: 'user' })
-  role: string;
-
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Role', default: 'user' })
+  role: Role;
+  @Prop()
+  refreshToken: string;
   @Prop({ default: 'local' })
   accountType: string;
 
@@ -38,10 +43,24 @@ export class User {
 
   @Prop()
   codeExpired: Date;
-
   @Prop()
   resetToken: string;
 
+  @Prop({ type: Object })
+  updatedBy: {
+    _id: mongoose.Schema.Types.ObjectId;
+    email: string;
+  };
+  @Prop({ type: Object })
+  deletedBy: {
+    _id: mongoose.Schema.Types.ObjectId;
+    email: string;
+  };
+
+  @Prop()
+  createdAt: Date;
+  @Prop()
+  updatedAt: Date;
   @Prop()
   isDeleted: boolean;
 

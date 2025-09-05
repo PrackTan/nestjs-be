@@ -17,6 +17,9 @@ import {
   SendForgotPasswordMailDto,
 } from './dto/mail-dto';
 import { InvalidVerificationCodeException } from '@/core/global-exeptions';
+import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
+import ms from 'ms';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +27,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
+    private readonly configService: ConfigService,
   ) {}
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findbyEmail(email);
@@ -37,7 +41,7 @@ export class AuthService {
     }
     return user;
   }
-  async login(user: User): Promise<any> {
+  async login(user: User, res: Response): Promise<any> {
     const { _id, email, name, role } = user;
     const payload = {
       sub: _id,
@@ -50,6 +54,20 @@ export class AuthService {
       },
     };
     const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.createRefreshToken(payload);
+    // update refresh token in user
+    console.log('Updating refresh token for user:', _id);
+    console.log('Refresh token:', refreshToken);
+    const updateResult = await this.usersService.updateRefreshToken(
+      _id,
+      refreshToken,
+    );
+    console.log('Update result:', updateResult);
+    // set refresh token in cookies
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      maxAge: ms(this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRED')),
+    });
     return {
       access_token: accessToken,
       user: {
@@ -66,6 +84,13 @@ export class AuthService {
       throw new BadRequestException('Email already exists');
     }
     return this.usersService.register(createAuthDto);
+  }
+  createRefreshToken(payload) {
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRED'),
+    });
+    return refreshToken;
   }
   async sendTestMail() {
     return this.mailService.sendActivationMail({

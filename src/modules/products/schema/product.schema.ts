@@ -12,6 +12,8 @@ export class Product {
   category: Category;
   @Prop()
   brand: string;
+  @Prop({ type: [String], default: [] })
+  tags: string[];
   @Prop({ required: true })
   price: number;
 
