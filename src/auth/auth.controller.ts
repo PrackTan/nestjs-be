@@ -8,10 +8,10 @@ import {
   Controller,
   Post,
   UseGuards,
-  Request,
   Get,
   Body,
   Res,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
@@ -23,7 +23,9 @@ import {
   RetryCodeDto,
   SendForgotPasswordMailDto,
 } from './dto/mail-dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { RUser } from '@/decorator/customize.request';
+import { User } from '@/modules/users/schemas/user.schema';
 
 @Controller('auth')
 export class AuthController {
@@ -43,11 +45,17 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @ResponseMessage('Login success')
   @Post('login')
-  HandleLogin(@Request() req, @Res({ passthrough: true }) res: Response) {
+  HandleLogin(@Req() req, @Res({ passthrough: true }) res: Response) {
     // Gọi service để tạo JWT token và trả về thông tin user
     return this.authService.login(req.user, res);
   }
-
+  @Post('logout')
+  HandleLogout(
+    @Res({ passthrough: true }) response: Response,
+    @RUser() user: any,
+  ) {
+    return this.authService.logout(user, response);
+  }
   /**
    * Endpoint lấy thông tin profile của user đã đăng nhập
    *
@@ -56,12 +64,28 @@ export class AuthController {
    */
   // @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req) {
+  getProfile(@Req() req) {
     // req.user chứa thông tin user được giải mã từ JWT token
     console.log(req.user);
     return req.user;
   }
 
+  @Get('account')
+  handleGetAccount(@RUser() user: any) {
+    return user;
+  }
+  @Public()
+  @ResponseMessage('Refresh token success')
+  @Get('refresh')
+  handleRefreshToken(
+    @Req() request: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    console.log(request.cookies);
+    const refreshToken = request.cookies['refresh_token'];
+    // console.log(refreshToken);
+    return this.authService.processRefreshToken(refreshToken, res);
+  }
   /**
    * Endpoint đăng ký tài khoản mới
    *

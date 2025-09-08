@@ -20,7 +20,7 @@ import { InvalidVerificationCodeException } from '@/core/global-exeptions';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import ms from 'ms';
-
+import { Request } from 'express';
 @Injectable()
 export class AuthService {
   constructor(
@@ -78,6 +78,17 @@ export class AuthService {
       },
     };
   }
+  async logout(user: User, res: Response) {
+    try {
+      await this.usersService.updateRefreshToken(user._id.toString(), null);
+      res.clearCookie('refresh_token');
+      return {
+        message: 'Logout success',
+      };
+    } catch (error) {
+      throw new BadRequestException('Logout failed');
+    }
+  }
   async register(createAuthDto: CreateAuthDto) {
     const user = await this.usersService.findbyEmail(createAuthDto.email);
     if (user) {
@@ -118,5 +129,57 @@ export class AuthService {
     return await this.usersService.sendForgotPasswordMail(
       sendForgotPasswordMailDto,
     );
+  }
+  async processRefreshToken(refreshToken: string, res: Response) {
+    try {
+      this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      });
+      let user = await this.usersService.findUserByRefreshToken(refreshToken);
+      if (user) {
+        const { _id, email, name, role } = user;
+        const payload = {
+          sub: _id,
+          iss: 'from server',
+          user: {
+            _id: _id,
+            email: email,
+            name: name,
+            role: role,
+          },
+        };
+        const accessToken = this.jwtService.sign(payload);
+        const refreshToken = this.createRefreshToken(payload);
+        // update refresh token in user
+        console.log('Updating refresh token for user:', _id);
+        console.log('Refresh token:', refreshToken);
+        const updateResult = await this.usersService.updateRefreshToken(
+          _id.toString(),
+          refreshToken,
+        );
+        console.log('Update result:', updateResult);
+        // set refresh token in cookies
+        res.clearCookie('refresh_token');
+        res.cookie('refresh_token', refreshToken, {
+          httpOnly: true,
+          maxAge: ms(
+            this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRED'),
+          ),
+        });
+        return {
+          access_token: accessToken,
+          user: {
+            _id: _id,
+            email: email,
+            name: name,
+            role: role,
+          },
+        };
+      } else {
+        throw new BadRequestException('Invalid refresh token');
+      }
+    } catch (error) {
+      throw new BadRequestException('Invalid refresh token');
+    }
   }
 }

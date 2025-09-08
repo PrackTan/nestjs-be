@@ -423,4 +423,7 @@ export class UsersService {
     );
     return result;
   }
+  findUserByRefreshToken(refreshToken: string) {
+    return this.userModel.findOne({ refreshToken: refreshToken });
+  }
 }
