@@ -24,6 +24,7 @@ import { softDeletePlugin } from 'soft-delete-plugin-mongoose';
 import { CategoryModule } from '@/modules/category/category.module';
 import { ProductsModule } from '@/modules/products/products.module';
 import { RoleModule } from '@/modules/role/role.module';
+import { FilesModule } from './files/files.module';
 /**
  * AppModule - Module gốc của ứng dụng NestJS
  *
@@ -107,6 +108,8 @@ import { RoleModule } from '@/modules/role/role.module';
     CategoryModule,
 
     RoleModule,
+
+    FilesModule,
   ],
   controllers: [AppController], // Controller gốc của ứng dụng
   providers: [
